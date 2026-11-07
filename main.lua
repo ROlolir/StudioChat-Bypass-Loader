@@ -1,5 +1,14 @@
 local Players = game:GetService("Players")
-local Chat = game:GetService("Chat")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local toggleRemote = ReplicatedStorage:FindFirstChild("ToggleChatBypass")
+if not toggleRemote then
+	toggleRemote = Instance.new("RemoteEvent")
+	toggleRemote.Name = "ToggleChatBypass"
+	toggleRemote.Parent = ReplicatedStorage
+end
+
+local activePlayers = {}
 
 local function createCustomBubble(player, character, message)
 	local head = character:FindFirstChild("Head")
@@ -42,11 +51,17 @@ local function createCustomBubble(player, character, message)
 	if billboard then billboard:Destroy() end
 end
 
+toggleRemote.OnServerEvent:Connect(function(player, state)
+	activePlayers[player.UserId] = state
+end)
+
 local function onPlayerAdded(player)
 	player.Chatted:Connect(function(message)
-		local character = player.Character
-		if character then
-			task.spawn(createCustomBubble, player, character, message)
+		if activePlayers[player.UserId] == true then
+			local character = player.Character
+			if character then
+				task.spawn(createCustomBubble, player, character, message)
+			end
 		end
 	end)
 end
